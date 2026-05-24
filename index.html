@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebGIS Titik Kontrol Geodesi Kota Sukabumi</title>
+    <meta charset="utf-8" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+
+        /* Judul peta */
+        .judul {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 12px 22px;
+            border-radius: 10px;
+            font-size: 15px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.35);
+            line-height: 22px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 650px;
+            border-top: 4px solid #e67e22;
+        }
+
+        .judul-logo {
+            width: 58px;
+            height: 58px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            border: 3px solid #e67e22;
+            flex-shrink: 0;
+        }
+
+        .judul-logo img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .judul span {
+            font-size: 13px;
+            color: #555;
+        }
+
+        /* Legenda */
+        .legenda {
+            position: absolute;
+            bottom: 35px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 0 8px rgba(0,0,0,0.35);
+            line-height: 23px;
+            border-top: 4px solid #e67e22;
+        }
+
+        .legenda-subtitle {
+            font-weight: bold;
+            color: #e67e22;
+            margin-top: 8px;
+            margin-bottom: 3px;
+            font-size: 13px;
+        }
+
+        .kotak {
+            display: inline-block;
+            width: 18px;
+            height: 10px;
+            margin-right: 8px;
+            border: 1px solid #999;
+        }
+
+        .titik-kontrol {
+            display: inline-block;
+            color: #ff0000;
+            font-size: 20px;
+            margin-right: 9px;
+            text-shadow:
+                -1px -1px 0 #ffffff,
+                1px -1px 0 #ffffff,
+                -1px  1px 0 #ffffff,
+                1px  1px 0 #ffffff;
+        }
+
+        .bintang {
+            display: inline-block;
+            color: #8e44ad;
+            font-size: 16px;
+            margin-right: 9px;
+            text-shadow:
+                -1px -1px 0 #ffffff,
+                 1px -1px 0 #ffffff,
+                -1px  1px 0 #ffffff,
+                 1px  1px 0 #ffffff;
+        }
+
+        /* Koordinat */
+        .koordinat {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+
+        /* Info box */
+        .info-box {
+            position: absolute;
+            bottom: 95px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+            line-height: 18px;
+            border-top: 4px solid #e67e22;
+        }
+
+        /* Tombol home */
+        .leaflet-control-custom {
+            background-color: white;
+            width: 34px;
+            height: 34px;
+            line-height: 34px;
+            text-align: center;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        /* Popup */
+        .popup-custom {
+            font-family: "Times New Roman", Times, serif;
+            width: 360px;
+            background: white;
+        }
+
+        .popup-title {
+            background: #e67e22;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px 6px 0 0;
+            font-size: 16px;
+        }
+
+        .popup-custom table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .popup-custom td {
+            border: 1px solid #ddd;
+            padding: 7px 10px;
+            font-size: 14px;
+            background: white;
+            vertical-align: top;
+        }
+
+        .popup-custom td:first-child {
+            font-weight: bold;
+            width: 38%;
+            background: #f8f8f8;
+        }
+
+        .popup-atas {
+            z-index: 3001 !important;
+        }
+
+        .leaflet-popup-pane {
+            z-index: 3000 !important;
+        }
+
+        .leaflet-popup {
+            z-index: 3001 !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #ffffff !important;
+            opacity: 1 !important;
+            border-radius: 14px;
+        }
+
+        .leaflet-popup-content {
+            background: #ffffff !important;
+            opacity: 1 !important;
+        }
+
+        body,
+        #map,
+        .judul,
+        .legenda,
+        .info-box,
+        .koordinat,
+        .popup-custom,
+        .leaflet-control,
+        .leaflet-popup-content,
+        .leaflet-control-layers {
+            font-family: "Times New Roman", Times, serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Judul Peta -->
+    <div class="judul">
+        <div class="judul-logo">
+            <img src="logo_undip.webp" alt="Logo Undip">
+        </div>
+        <div>
+            <b>WebGIS Persebaran Titik Kontrol Geodesi di Kota Sukabumi</b><br>
+            <span>Visualisasi titik kontrol geodesi berbasis PostgreSQL, PostGIS, GeoServer, dan Leaflet</span>
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="legenda">
+        <b>Legenda</b><br>
+
+        <div class="legenda-subtitle">Layer Utama</div>
+        <span class="titik-kontrol">★</span>
+        Titik Kontrol Geodesi<br>
+
+        <div class="legenda-subtitle">Layer Pendukung</div>
+
+        <span class="kotak" style="background:#ffffff; border:2px dashed #000000;"></span>
+        Administrasi<br>
+
+        <span class="kotak" style="background:#f2c94c; opacity:0.75;"></span>
+        Pemukiman<br>
+
+        <span class="kotak" style="background:#ff9f1c;"></span>
+        Jalan<br>
+
+        <span class="kotak" style="background:#00b4ff;"></span>
+        Sungai<br>
+
+        <span class="bintang">★</span>
+        Pemerintahan
+    </div>
+
+    <!-- Informasi Data -->
+    <div class="info-box">
+        <b>Informasi Data</b><br>
+        Wilayah: Kota Sukabumi<br>
+        Tema: Titik Kontrol Geodesi<br>
+        Basis Data: PostgreSQL/PostGIS<br>
+        Layanan: GeoServer WMS
+    </div>
+
+    <!-- Koordinat Mouse -->
+    <div class="koordinat" id="koordinat">
+        Koordinat: -
+    </div>
+
+    <!-- Map -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <script>
+        // Inisialisasi peta Kota Sukabumi
+        var map = L.map('map').setView([-6.9180, 106.9270], 13);
+
+        // Basemap OpenStreetMap
+        var osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'OpenStreetMap'
+        });
+
+        // Basemap citra satelit Esri
+        var esriImagery = L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri'
+        }).addTo(map);
+
+        // URL WMS GeoServer
+        var wmsUrl = 'https://exterior-playoff-squash.ngrok-free.dev/geoserver/SukabumiGeodesi/wms';
+
+        // Membuat pane khusus agar titik kontrol selalu berada di atas layer lain
+        map.createPane('panePemukiman');
+        map.getPane('panePemukiman').style.zIndex = 300;
+
+        map.createPane('paneJalan');
+        map.getPane('paneJalan').style.zIndex = 500;
+
+        map.createPane('paneSungai');
+        map.getPane('paneSungai').style.zIndex = 600;
+
+        map.createPane('panePemerintahan');
+        map.getPane('panePemerintahan').style.zIndex = 700;
+
+        map.createPane('paneAdministrasi');
+        map.getPane('paneAdministrasi').style.zIndex = 800;
+
+        map.createPane('paneTitikKontrol');
+        map.getPane('paneTitikKontrol').style.zIndex = 1000;
+
+        // Layer Pemukiman
+        var pemukiman = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:pemukiman_sukabumi',
+            styles: 'pemukiman_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 0.65,
+            pane: 'panePemukiman'
+            'ngrok-skip-browser-warning': 'true'
+        }).addTo(map);
+
+        // Layer Jalan
+        var jalan = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:jalan_sukabumi',
+            styles: 'jalan_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 0.9,
+            pane: 'paneJalan'
+            'ngrok-skip-browser-warning': 'true'
+        }).addTo(map);
+
+        // Layer Sungai
+        var sungai = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:sungai_sukabumi',
+            styles: 'sungai_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 0.95,
+            pane: 'paneSungai'
+            'ngrok-skip-browser-warning': 'true'
+        });
+
+        // Layer Pemerintahan
+        var pemerintahan = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:pemerintahan',
+            styles: 'pemerintahan_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 1,
+            pane: 'panePemerintahan'
+            'ngrok-skip-browser-warning': 'true'
+        });
+
+        // Layer Administrasi
+        var administrasi = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:administrasi_sukabumi',
+            styles: 'administrasi_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 1,
+            pane: 'paneAdministrasi'
+            'ngrok-skip-browser-warning': 'true'
+        }).addTo(map);
+
+        // Layer Titik Kontrol Geodesi
+        // Diletakkan paling akhir dan zIndex paling tinggi agar selalu terlihat.
+        var titikGeodesi = L.tileLayer.wms(wmsUrl, {
+            layers: 'SukabumiGeodesi:titik_kontrol_geodesi',
+            styles: 'titik_geodesi_style',
+            format: 'image/png',
+            transparent: true,
+            version: '1.1.1',
+            opacity: 1,
+            pane: 'paneTitikKontrol'
+            'ngrok-skip-browser-warning': 'true'
+        }).addTo(map);
+
+        titikGeodesi.bringToFront();
+
+        // Basemap
+        var baseMaps = {
+            "OpenStreetMap": osm,
+            "Citra Satelit Esri": esriImagery
+        };
+
+        // Overlay layer
+        var overlayMaps = {
+            "Administrasi": administrasi,
+            "Titik Kontrol Geodesi": titikGeodesi,
+            "Pemukiman": pemukiman,
+            "Jalan": jalan,
+            "Sungai": sungai,
+            "Pemerintahan": pemerintahan
+        };
+
+        // Layer control
+        L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+        // Skala peta
+        L.control.scale({
+            position: 'bottomright',
+            metric: true,
+            imperial: false
+        }).addTo(map);
+
+        // Tombol Home / Zoom ke Kota Sukabumi
+        var homeControl = L.control({position: 'topleft'});
+
+        homeControl.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+            div.innerHTML = '⌂';
+            div.title = 'Kembali ke Kota Sukabumi';
+
+            div.onclick = function() {
+                map.setView([-6.9180, 106.9270], 13);
+            };
+
+            return div;
+        };
+
+        homeControl.addTo(map);
+
+        // Menampilkan koordinat mouse
+        map.on('mousemove', function(e) {
+            document.getElementById('koordinat').innerHTML =
+                'Koordinat: ' + e.latlng.lat.toFixed(5) + ', ' + e.latlng.lng.toFixed(5);
+        });
+
+        // Popup informasi ketika peta diklik
+        map.on('click', function(e) {
+            var isiPopup = `
+                <div class="popup-custom">
+                    <div class="popup-title">Informasi Atribut</div>
+                    <table>
+                        <tr>
+                            <td>Wilayah</td>
+                            <td>Kota Sukabumi</td>
+                        </tr>
+                        <tr>
+                            <td>Tema</td>
+                            <td>Persebaran Titik Kontrol Geodesi</td>
+                        </tr>
+                        <tr>
+                            <td>Layer Utama</td>
+                            <td>Titik Kontrol Geodesi</td>
+                        </tr>
+                        <tr>
+                            <td>Layer Pendukung</td>
+                            <td>Administrasi, Pemukiman, Jalan, Sungai, dan Pemerintahan</td>
+                        </tr>
+                        <tr>
+                            <td>Database</td>
+                            <td>webgis_sukabumi_geodesi</td>
+                        </tr>
+                        <tr>
+                            <td>Sumber</td>
+                            <td>GeoServer WMS</td>
+                        </tr>
+                        <tr>
+                            <td>Koordinat</td>
+                            <td>${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+
+            L.popup({
+                maxWidth: 380
+            })
+                .setLatLng(e.latlng)
+                .setContent(isiPopup)
+                .openOn(map);
+        });
+    </script>
+
+</body>
+</html>
