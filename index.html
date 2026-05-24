@@ -11,7 +11,7 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: "Times New Roman", Times, serif;
         }
 
         #map {
@@ -19,7 +19,6 @@
             height: 100vh;
         }
 
-        /* Judul peta */
         .judul {
             position: absolute;
             top: 18px;
@@ -60,11 +59,10 @@
         }
 
         .judul span {
-            font-size: 13px;
+            font-size: 14px;
             color: #555;
         }
 
-        /* Legenda */
         .legenda {
             position: absolute;
             bottom: 35px;
@@ -73,9 +71,9 @@
             background: rgba(255,255,255,0.95);
             padding: 10px 14px;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 15px;
             box-shadow: 0 0 8px rgba(0,0,0,0.35);
-            line-height: 23px;
+            line-height: 24px;
             border-top: 4px solid #e67e22;
         }
 
@@ -84,7 +82,7 @@
             color: #e67e22;
             margin-top: 8px;
             margin-bottom: 3px;
-            font-size: 13px;
+            font-size: 14px;
         }
 
         .kotak {
@@ -102,15 +100,15 @@
             margin-right: 9px;
             text-shadow:
                 -1px -1px 0 #ffffff,
-                1px -1px 0 #ffffff,
+                 1px -1px 0 #ffffff,
                 -1px  1px 0 #ffffff,
-                1px  1px 0 #ffffff;
+                 1px  1px 0 #ffffff;
         }
 
         .bintang {
             display: inline-block;
             color: #8e44ad;
-            font-size: 16px;
+            font-size: 18px;
             margin-right: 9px;
             text-shadow:
                 -1px -1px 0 #ffffff,
@@ -119,7 +117,6 @@
                  1px  1px 0 #ffffff;
         }
 
-        /* Koordinat */
         .koordinat {
             position: absolute;
             bottom: 10px;
@@ -128,11 +125,10 @@
             background: rgba(255,255,255,0.95);
             padding: 6px 10px;
             border-radius: 5px;
-            font-size: 13px;
+            font-size: 14px;
             box-shadow: 0 0 5px rgba(0,0,0,0.3);
         }
 
-        /* Info box */
         .info-box {
             position: absolute;
             bottom: 95px;
@@ -141,13 +137,12 @@
             background: rgba(255,255,255,0.95);
             padding: 9px 12px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 13px;
             box-shadow: 0 0 6px rgba(0,0,0,0.3);
-            line-height: 18px;
+            line-height: 19px;
             border-top: 4px solid #e67e22;
         }
 
-        /* Tombol home */
         .leaflet-control-custom {
             background-color: white;
             width: 34px;
@@ -159,7 +154,6 @@
             border-radius: 4px;
         }
 
-        /* Popup */
         .popup-custom {
             font-family: "Times New Roman", Times, serif;
             width: 360px;
@@ -196,10 +190,6 @@
             background: #f8f8f8;
         }
 
-        .popup-atas {
-            z-index: 3001 !important;
-        }
-
         .leaflet-popup-pane {
             z-index: 3000 !important;
         }
@@ -219,17 +209,36 @@
             opacity: 1 !important;
         }
 
-        body,
-        #map,
-        .judul,
-        .legenda,
-        .info-box,
-        .koordinat,
-        .popup-custom,
         .leaflet-control,
         .leaflet-popup-content,
         .leaflet-control-layers {
             font-family: "Times New Roman", Times, serif;
+        }
+
+        .icon-titik-geodesi {
+            color: #ff0000;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 24px;
+            text-shadow:
+                -2px -2px 0 #ffffff,
+                 2px -2px 0 #ffffff,
+                -2px  2px 0 #ffffff,
+                 2px  2px 0 #ffffff;
+        }
+
+        .icon-pemerintahan {
+            color: #8e44ad;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 20px;
+            text-shadow:
+                -1px -1px 0 #ffffff,
+                 1px -1px 0 #ffffff,
+                -1px  1px 0 #ffffff,
+                 1px  1px 0 #ffffff;
         }
     </style>
 </head>
@@ -278,8 +287,8 @@
         <b>Informasi Data</b><br>
         Wilayah: Kota Sukabumi<br>
         Tema: Titik Kontrol Geodesi<br>
-        Basis Data: PostgreSQL/PostGIS<br>
-        Layanan: GeoServer WMS
+        Format Publik: GeoJSON<br>
+        Hosting: GitHub Pages
     </div>
 
     <!-- Koordinat Mouse -->
@@ -308,102 +317,167 @@
             attribution: 'Tiles &copy; Esri'
         }).addTo(map);
 
-        // URL WMS GeoServer
-        var wmsUrl = 'https://exterior-playoff-squash.ngrok-free.dev/geoserver/SukabumiGeodesi/wms';
+        // Grup layer GeoJSON
+        var pemukiman = L.layerGroup().addTo(map);
+        var jalan = L.layerGroup().addTo(map);
+        var sungai = L.layerGroup();
+        var pemerintahan = L.layerGroup();
+        var administrasi = L.layerGroup().addTo(map);
+        var titikGeodesi = L.layerGroup().addTo(map);
 
-        // Membuat pane khusus agar titik kontrol selalu berada di atas layer lain
-        map.createPane('panePemukiman');
-        map.getPane('panePemukiman').style.zIndex = 300;
+        // Style administrasi
+        function styleAdministrasi(feature) {
+            return {
+                color: "#000000",
+                weight: 2,
+                dashArray: "7 5",
+                fillColor: "#ffffff",
+                fillOpacity: 0
+            };
+        }
 
-        map.createPane('paneJalan');
-        map.getPane('paneJalan').style.zIndex = 500;
+        // Style pemukiman
+        function stylePemukiman(feature) {
+            return {
+                color: "#b7950b",
+                weight: 0.5,
+                fillColor: "#f2c94c",
+                fillOpacity: 0.45
+            };
+        }
 
-        map.createPane('paneSungai');
-        map.getPane('paneSungai').style.zIndex = 600;
+        // Style jalan
+        function styleJalan(feature) {
+            return {
+                color: "#ff9f1c",
+                weight: 2,
+                opacity: 0.95
+            };
+        }
 
-        map.createPane('panePemerintahan');
-        map.getPane('panePemerintahan').style.zIndex = 700;
+        // Style sungai
+        function styleSungai(feature) {
+            return {
+                color: "#00b4ff",
+                weight: 2,
+                opacity: 0.95
+            };
+        }
 
-        map.createPane('paneAdministrasi');
-        map.getPane('paneAdministrasi').style.zIndex = 800;
+        // Style titik kontrol geodesi
+        function pointTitikGeodesi(feature, latlng) {
+            return L.marker(latlng, {
+                icon: L.divIcon({
+                    className: "icon-titik-geodesi",
+                    html: "★",
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                })
+            });
+        }
 
-        map.createPane('paneTitikKontrol');
-        map.getPane('paneTitikKontrol').style.zIndex = 1000;
+        // Style pemerintahan
+        function pointPemerintahan(feature, latlng) {
+            return L.marker(latlng, {
+                icon: L.divIcon({
+                    className: "icon-pemerintahan",
+                    html: "★",
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            });
+        }
 
-        // Layer Pemukiman
-        var pemukiman = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:pemukiman_sukabumi',
-            styles: 'pemukiman_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 0.65,
-            pane: 'panePemukiman'
-            'ngrok-skip-browser-warning': 'true'
-        }).addTo(map);
+        // Popup atribut GeoJSON
+        function popupAtribut(feature, layer) {
+            var props = feature.properties || {};
 
-        // Layer Jalan
-        var jalan = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:jalan_sukabumi',
-            styles: 'jalan_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 0.9,
-            pane: 'paneJalan'
-            'ngrok-skip-browser-warning': 'true'
-        }).addTo(map);
+            var isi = "<div class='popup-custom'>" +
+                "<div class='popup-title'>Informasi Atribut</div>" +
+                "<table>";
 
-        // Layer Sungai
-        var sungai = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:sungai_sukabumi',
-            styles: 'sungai_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 0.95,
-            pane: 'paneSungai'
-            'ngrok-skip-browser-warning': 'true'
-        });
+            var adaAtribut = false;
 
-        // Layer Pemerintahan
-        var pemerintahan = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:pemerintahan',
-            styles: 'pemerintahan_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 1,
-            pane: 'panePemerintahan'
-            'ngrok-skip-browser-warning': 'true'
-        });
+            for (var key in props) {
+                if (props[key] !== null && props[key] !== "") {
+                    isi += "<tr><td>" + key + "</td><td>" + props[key] + "</td></tr>";
+                    adaAtribut = true;
+                }
+            }
 
-        // Layer Administrasi
-        var administrasi = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:administrasi_sukabumi',
-            styles: 'administrasi_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 1,
-            pane: 'paneAdministrasi'
-            'ngrok-skip-browser-warning': 'true'
-        }).addTo(map);
+            if (!adaAtribut) {
+                isi += "<tr><td>Informasi</td><td>Atribut tidak tersedia</td></tr>";
+            }
 
-        // Layer Titik Kontrol Geodesi
-        // Diletakkan paling akhir dan zIndex paling tinggi agar selalu terlihat.
-        var titikGeodesi = L.tileLayer.wms(wmsUrl, {
-            layers: 'SukabumiGeodesi:titik_kontrol_geodesi',
-            styles: 'titik_geodesi_style',
-            format: 'image/png',
-            transparent: true,
-            version: '1.1.1',
-            opacity: 1,
-            pane: 'paneTitikKontrol'
-            'ngrok-skip-browser-warning': 'true'
-        }).addTo(map);
+            isi += "</table></div>";
 
-        titikGeodesi.bringToFront();
+            layer.bindPopup(isi, {
+                maxWidth: 400,
+                className: "popup-atas"
+            });
+        }
+
+        // Load administrasi
+        fetch("data/administrasi_sukabumi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: styleAdministrasi,
+                    onEachFeature: popupAtribut
+                }).addTo(administrasi);
+            });
+
+        // Load pemukiman
+        fetch("data/pemukiman_sukabumi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: stylePemukiman,
+                    onEachFeature: popupAtribut
+                }).addTo(pemukiman);
+            });
+
+        // Load jalan
+        fetch("data/jalan_sukabumi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: styleJalan,
+                    onEachFeature: popupAtribut
+                }).addTo(jalan);
+            });
+
+        // Load sungai
+        fetch("data/sungai_sukabumi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    style: styleSungai,
+                    onEachFeature: popupAtribut
+                }).addTo(sungai);
+            });
+
+        // Load pemerintahan
+        fetch("data/pemerintahan_sukabumi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    pointToLayer: pointPemerintahan,
+                    onEachFeature: popupAtribut
+                }).addTo(pemerintahan);
+            });
+
+        // Load titik kontrol geodesi
+        fetch("data/titik_kontrol_geodesi.geojson")
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    pointToLayer: pointTitikGeodesi,
+                    onEachFeature: popupAtribut
+                }).addTo(titikGeodesi);
+
+                titikGeodesi.bringToFront();
+            });
 
         // Basemap
         var baseMaps = {
@@ -426,18 +500,18 @@
 
         // Skala peta
         L.control.scale({
-            position: 'bottomright',
+            position: "bottomright",
             metric: true,
             imperial: false
         }).addTo(map);
 
         // Tombol Home / Zoom ke Kota Sukabumi
-        var homeControl = L.control({position: 'topleft'});
+        var homeControl = L.control({position: "topleft"});
 
         homeControl.onAdd = function(map) {
-            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-            div.innerHTML = '⌂';
-            div.title = 'Kembali ke Kota Sukabumi';
+            var div = L.DomUtil.create("div", "leaflet-bar leaflet-control leaflet-control-custom");
+            div.innerHTML = "⌂";
+            div.title = "Kembali ke Kota Sukabumi";
 
             div.onclick = function() {
                 map.setView([-6.9180, 106.9270], 13);
@@ -449,54 +523,19 @@
         homeControl.addTo(map);
 
         // Menampilkan koordinat mouse
-        map.on('mousemove', function(e) {
-            document.getElementById('koordinat').innerHTML =
-                'Koordinat: ' + e.latlng.lat.toFixed(5) + ', ' + e.latlng.lng.toFixed(5);
+        map.on("mousemove", function(e) {
+            document.getElementById("koordinat").innerHTML =
+                "Koordinat: " + e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5);
         });
 
-        // Popup informasi ketika peta diklik
-        map.on('click', function(e) {
-            var isiPopup = `
-                <div class="popup-custom">
-                    <div class="popup-title">Informasi Atribut</div>
-                    <table>
-                        <tr>
-                            <td>Wilayah</td>
-                            <td>Kota Sukabumi</td>
-                        </tr>
-                        <tr>
-                            <td>Tema</td>
-                            <td>Persebaran Titik Kontrol Geodesi</td>
-                        </tr>
-                        <tr>
-                            <td>Layer Utama</td>
-                            <td>Titik Kontrol Geodesi</td>
-                        </tr>
-                        <tr>
-                            <td>Layer Pendukung</td>
-                            <td>Administrasi, Pemukiman, Jalan, Sungai, dan Pemerintahan</td>
-                        </tr>
-                        <tr>
-                            <td>Database</td>
-                            <td>webgis_sukabumi_geodesi</td>
-                        </tr>
-                        <tr>
-                            <td>Sumber</td>
-                            <td>GeoServer WMS</td>
-                        </tr>
-                        <tr>
-                            <td>Koordinat</td>
-                            <td>${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}</td>
-                        </tr>
-                    </table>
-                </div>
-            `;
-
-            L.popup({
-                maxWidth: 380
-            })
+        // Popup koordinat ketika klik area kosong
+        map.on("click", function(e) {
+            L.popup()
                 .setLatLng(e.latlng)
-                .setContent(isiPopup)
+                .setContent(
+                    "<b>Koordinat Lokasi</b><br>" +
+                    e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5)
+                )
                 .openOn(map);
         });
     </script>
